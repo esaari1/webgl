@@ -56,12 +56,14 @@ export function drawScene(gl, program, rotation, zoom) {
     // the center of the scene.
     const modelViewMatrix = mat4.create();
 
+    const zoomFac = (20 * zoom) / 100 + 4;
+
     // Now move the drawing position a bit to where we want to
     // start drawing the square.
     mat4.translate(
         modelViewMatrix, // destination matrix
         modelViewMatrix, // matrix to translate
-        [-0.0, 0.0, -zoom]
+        [-0.0, 0.0, -zoomFac]
     ); // amount to translate
 
     mat4.rotateZ(modelViewMatrix, modelViewMatrix, rotation);

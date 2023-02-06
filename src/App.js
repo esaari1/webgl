@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './App.css';
 import { cubeColors, cubeIndexes, cubeNormals, cubePoints } from './geometry/cube';
 import { drawScene, initBuffer, initElementBuffer } from './gl';
@@ -6,19 +6,33 @@ import { initShaderProgram } from './shaders';
 
 function App() {
 
-  const [zoom, setZoom] = useState(6);
+  const [zoom, setZoom] = useState(85);
+  //const [rotation, setRotation] = useState(0);
+
+  const requestRef = useRef();
+  const previousTimeRef = useRef();
+  const glRef = useRef();
+  const programRef = useRef();
+  const rotateRef = useRef(0);
+  const zoomRef = useRef(85);
+
+  const animate = time => {
+    if (previousTimeRef.current !== undefined) {
+      time *= 0.001; // convert to seconds
+      const delta = time - previousTimeRef.current;
+
+      drawScene(glRef.current, programRef.current, rotateRef.current, 100 - zoomRef.current);
+      rotateRef.current += delta;
+    }
+
+    previousTimeRef.current = time;
+    requestRef.current = requestAnimationFrame(animate);
+  }
 
   useEffect(() => {
-    setup();
-  }, []);
-
-  function setup() {
     const canvas = document.querySelector("#glcanvas");
     // Initialize the GL context
     const gl = canvas.getContext("webgl");
-
-    let rotation = 0;
-    let delta = 0;
 
     // Only continue if WebGL is available and working
     if (gl === null) {
@@ -44,28 +58,18 @@ function App() {
 
     // Normal buffer
     const normals = cubeNormals();
-    initBuffer(gl, program, normals, "aVertexNormal", 3)
+    initBuffer(gl, program, normals, "aVertexNormal", 3);
 
-    // no animation
-    // drawScene(gl, program, rotation);
-    let then = 0;
+    glRef.current = gl;
+    programRef.current = program;
 
-    // Draw the scene repeatedly
-    function render(now) {
-      now *= 0.001; // convert to seconds
-      delta = now - then;
-      then = now;
-
-      drawScene(gl, program, rotation, 6);
-      rotation += delta;
-
-      requestAnimationFrame(render);
-    }
-    requestAnimationFrame(render);
-  }
+    requestRef.current = requestAnimationFrame(animate);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const updateZoom = (evt) => {
     setZoom(evt.target.value);
+    zoomRef.current = evt.target.value;
   }
 
   return (
@@ -73,7 +77,7 @@ function App() {
       <canvas id="glcanvas" width="640" height="480"></canvas>
       <div className="control">
         <label>Zoom: </label>
-        <input type="range" id="slider" min="1" max="10" value={zoom} onChange={updateZoom} />
+        <input type="range" id="slider" min="1" max="100" value={zoom} onChange={updateZoom} />
         <div>{zoom}</div>
       </div>
     </div>
