@@ -1,22 +1,31 @@
 import { mat4 } from "gl-matrix";
 
-export function initBuffer(gl, data) {
-    // Create a buffer for the square's positions.
-    const positionBuffer = gl.createBuffer();
+export function initBuffer(gl, program, data, varName, count) {
+    // Create a buffer.
+    const buffer = gl.createBuffer();
 
-    // Select the positionBuffer as the one to apply buffer
+    // Select the buffer as the one to apply buffer
     // operations to from here out.
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
 
-    // Now pass the list of positions into WebGL to build the
-    // shape. We do this by creating a Float32Array from the
+    // Now pass the data into WebGL. We do this by creating a Float32Array from the
     // JavaScript array, then use it to fill the current buffer.
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
 
-    return positionBuffer;
+    const attrib = gl.getAttribLocation(program, varName);
+    gl.vertexAttribPointer(attrib, count, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(attrib);
+
+    return buffer;
 }
 
-export function drawScene(gl, programInfo, buffer) {
+export function initElementBuffer(gl, data) {
+    const buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data), gl.STATIC_DRAW);
+}
+
+export function drawScene(gl, program, rotation, zoom) {
     gl.clearColor(0.0, 0.0, 0.0, 1.0); // Clear to black, fully opaque
     gl.clearDepth(1.0); // Clear everything
     gl.enable(gl.DEPTH_TEST); // Enable depth testing
@@ -52,52 +61,32 @@ export function drawScene(gl, programInfo, buffer) {
     mat4.translate(
         modelViewMatrix, // destination matrix
         modelViewMatrix, // matrix to translate
-        [-0.0, 0.0, -6.0]
+        [-0.0, 0.0, -zoom]
     ); // amount to translate
 
-    // Tell WebGL how to pull out the positions from the position
-    // buffer into the vertexPosition attribute.
-    setPositionAttribute(gl, buffer, programInfo);
+    mat4.rotateZ(modelViewMatrix, modelViewMatrix, rotation);
+    mat4.rotateY(modelViewMatrix, modelViewMatrix, rotation * 0.7);
+    mat4.rotateX(modelViewMatrix, modelViewMatrix, rotation * 0.3);
+
+    const normalMatrix = mat4.create();
+    mat4.invert(normalMatrix, modelViewMatrix);
+    mat4.transpose(normalMatrix, normalMatrix);
 
     // Tell WebGL to use our program when drawing
-    gl.useProgram(programInfo.program);
+    gl.useProgram(program);
+
+    const uProjectionMatrix = gl.getUniformLocation(program, "uProjectionMatrix");
+    const uModelViewMatrix = gl.getUniformLocation(program, "uModelViewMatrix");
+    const uNormalMatrix = gl.getUniformLocation(program, "uNormalMatrix");
 
     // Set the shader uniforms
-    gl.uniformMatrix4fv(
-        programInfo.uniformLocations.projectionMatrix,
-        false,
-        projectionMatrix
-    );
-    gl.uniformMatrix4fv(
-        programInfo.uniformLocations.modelViewMatrix,
-        false,
-        modelViewMatrix
-    );
+    gl.uniformMatrix4fv(uProjectionMatrix, false, projectionMatrix);
+    gl.uniformMatrix4fv(uModelViewMatrix, false, modelViewMatrix);
+    gl.uniformMatrix4fv(uNormalMatrix, false, normalMatrix);
 
-    {
-        const offset = 0;
-        const vertexCount = 4;
-        gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount);
-    }
-}
+    // Draw square
+    // gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
-// Tell WebGL how to pull out the positions from the position
-// buffer into the vertexPosition attribute.
-function setPositionAttribute(gl, buffer, programInfo) {
-    const numComponents = 2; // pull out 2 values per iteration
-    const type = gl.FLOAT; // the data in the buffer is 32bit floats
-    const normalize = false; // don't normalize
-    const stride = 0; // how many bytes to get from one set of values to the next
-    // 0 = use type and numComponents above
-    const offset = 0; // how many bytes inside the buffer to start from
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.vertexAttribPointer(
-        programInfo.attribLocations.vertexPosition,
-        numComponents,
-        type,
-        normalize,
-        stride,
-        offset
-    );
-    gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
+    // Draw cube
+    gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
 }
