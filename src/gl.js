@@ -1,5 +1,44 @@
 import { mat4 } from "gl-matrix";
 
+function loadShader(gl, type, source) {
+    const shader = gl.createShader(type);
+
+    // Send the source to the shader object
+    gl.shaderSource(shader, source);
+
+    // Compile the shader program
+    gl.compileShader(shader);
+
+    // See if it compiled successfully
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        alert(`An error occurred compiling the shaders: ${gl.getShaderInfoLog(shader)}`);
+        gl.deleteShader(shader);
+        return null;
+    }
+
+    return shader;
+}
+
+export function initShaderProgram(gl, vSource, fSource) {
+    const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vSource);
+    const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fSource);
+
+    // Create the shader program
+    const shaderProgram = gl.createProgram();
+
+    gl.attachShader(shaderProgram, vertexShader);
+    gl.attachShader(shaderProgram, fragmentShader);
+    gl.linkProgram(shaderProgram);
+
+    // If creating the shader program failed, alert
+    if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+        alert(`Unable to initialize the shader program: ${gl.getProgramInfoLog(shaderProgram)}`);
+        return null;
+    }
+
+    return shaderProgram;
+}
+
 export function initBuffer(gl, program, data, varName, count) {
     // Create a buffer.
     const buffer = gl.createBuffer();
@@ -25,7 +64,7 @@ export function initElementBuffer(gl, data) {
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data), gl.STATIC_DRAW);
 }
 
-export function drawScene(gl, program, rotation, zoom) {
+export function drawScene(gl, program, rotation, zoom, indexCount) {
     gl.clearColor(0.0, 0.0, 0.0, 1.0); // Clear to black, fully opaque
     gl.clearDepth(1.0); // Clear everything
     gl.enable(gl.DEPTH_TEST); // Enable depth testing
@@ -86,9 +125,9 @@ export function drawScene(gl, program, rotation, zoom) {
     gl.uniformMatrix4fv(uModelViewMatrix, false, modelViewMatrix);
     gl.uniformMatrix4fv(uNormalMatrix, false, normalMatrix);
 
-    // Draw square
-    // gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    // Draw array
+    //gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
-    // Draw cube
-    gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
+    // Draw elements
+    gl.drawElements(gl.TRIANGLES, indexCount, gl.UNSIGNED_SHORT, 0);
 }

@@ -7,4 +7,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-top: 16px;
+}
+
+nav {
+  margin-bottom: 16px;
 }
