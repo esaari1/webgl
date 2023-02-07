@@ -19,7 +19,7 @@ function Cube() {
             time *= 0.001; // convert to seconds
             const delta = time - previousTimeRef.current;
 
-            drawScene(glRef.current, programRef.current, rotateRef.current, 100 - zoomRef.current, indexCountRef.current);
+            drawScene(glRef.current, programRef.current, rotateRef.current * 0.3, rotateRef.current * 0.7, rotateRef.current, 100 - zoomRef.current, indexCountRef.current);
             rotateRef.current += delta;
         }
 

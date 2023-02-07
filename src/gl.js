@@ -64,7 +64,7 @@ export function initElementBuffer(gl, data) {
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data), gl.STATIC_DRAW);
 }
 
-export function drawScene(gl, program, rotation, zoom, indexCount) {
+export function drawScene(gl, program, rotateX, rotateY, rotateZ, zoom, indexCount) {
     gl.clearColor(0.0, 0.0, 0.0, 1.0); // Clear to black, fully opaque
     gl.clearDepth(1.0); // Clear everything
     gl.enable(gl.DEPTH_TEST); // Enable depth testing
@@ -105,9 +105,9 @@ export function drawScene(gl, program, rotation, zoom, indexCount) {
         [-0.0, 0.0, -zoomFac]
     ); // amount to translate
 
-    mat4.rotateZ(modelViewMatrix, modelViewMatrix, rotation);
-    mat4.rotateY(modelViewMatrix, modelViewMatrix, rotation * 0.7);
-    mat4.rotateX(modelViewMatrix, modelViewMatrix, rotation * 0.3);
+    mat4.rotateZ(modelViewMatrix, modelViewMatrix, rotateZ);
+    mat4.rotateY(modelViewMatrix, modelViewMatrix, rotateY);
+    mat4.rotateX(modelViewMatrix, modelViewMatrix, rotateX);
 
     const normalMatrix = mat4.create();
     mat4.invert(normalMatrix, modelViewMatrix);

@@ -1,41 +1,92 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { drawScene, initBuffer, initElementBuffer, initShaderProgram } from "./gl";
 import { icosphere } from "./geometry/icosphere";
 
 function Sphere() {
 
-    useEffect(() => {
-        const canvas = document.querySelector("#glcanvas");
-        // Initialize the GL context
-        const gl = canvas.getContext("webgl");
+    const [zoom, setZoom] = useState(10);
+    const [doRotate, setDoRotate] = useState(false);
+    const [rotateX, setRotateX] = useState(0);
+    const [rotateY, setRotateY] = useState(0);
+    const [prevMouseX, setPrevMouseX] = useState(0);
+    const [prevMouseY, setPrevMouseY] = useState(0);
 
-        // Only continue if WebGL is available and working
-        if (gl === null) {
-            alert(
-                "Unable to initialize WebGL. Your browser or machine may not support it."
-            );
-            return;
+    const initialized = useRef(false);
+    const glRef = useRef();
+    const programRef = useRef();
+    const indexCount = useRef(0);
+
+    useEffect(() => {
+
+        if (!initialized.current) {
+            const canvas = document.querySelector("#glcanvas");
+            // Initialize the GL context
+            const gl = canvas.getContext("webgl");
+
+            // Only continue if WebGL is available and working
+            if (gl === null) {
+                alert(
+                    "Unable to initialize WebGL. Your browser or machine may not support it."
+                );
+                return;
+            }
+
+            const sphere = icosphere(1);
+
+            const program = initShaderProgram(gl, vSource, fSource);
+
+            // Now create an array of positions for the square.
+            initBuffer(gl, program, sphere.vertices, "aVertexPosition", 3);
+
+            // Index buffer
+            initElementBuffer(gl, sphere.triangles);
+
+            // Normal buffer
+            initBuffer(gl, program, sphere.vertices, "aVertexNormal", 3);
+
+            initialized.current = true;
+
+            glRef.current = gl;
+            programRef.current = program;
+            indexCount.current = sphere.triangles.length;
         }
 
-        const sphere = icosphere(1);
+        drawScene(glRef.current, programRef.current, rotateX, rotateY, 0, zoom, indexCount.current);
+    }, [zoom, rotateX, rotateY])
 
-        const program = initShaderProgram(gl, vSource, fSource);
+    const handleZoom = (evt) => {
+        setZoom(previousZoom => previousZoom + evt.deltaY * 0.05);
+    }
 
-        // Now create an array of positions for the square.
-        initBuffer(gl, program, sphere.vertices, "aVertexPosition", 3);
+    const handleStartRotate = (evt) => {
+        setPrevMouseX(evt.clientX);
+        setPrevMouseY(evt.clientY);
+        setDoRotate(true);
+    }
 
-        // Index buffer
-        initElementBuffer(gl, sphere.triangles);
+    const handleStopRotate = () => {
+        setDoRotate(false);
+    }
 
-        // Normal buffer
-        initBuffer(gl, program, sphere.vertices, "aVertexNormal", 3);
+    const handleRotate = (evt) => {
+        if (doRotate) {
+            const deltaX = evt.clientX - prevMouseX;
+            setRotateY(prevRotateX => prevRotateX + deltaX * 0.01);
+            setPrevMouseX(evt.clientX);
 
-        drawScene(gl, program, 0, 10, sphere.triangles.length);
-    }, [])
+            const deltaY = evt.clientY - prevMouseY;
+            setRotateX(prevRotateX => prevRotateX + deltaY * 0.01);
+            setPrevMouseY(evt.clientY);
+        }
+    }
 
     return (
         <>
-            <canvas id="glcanvas" width="640" height="480"></canvas>
+            <canvas id="glcanvas" width="640" height="480"
+                onWheel={handleZoom}
+                onMouseDown={handleStartRotate}
+                onMouseUp={handleStopRotate}
+                onMouseMove={handleRotate}></canvas>
         </>
     )
 }
