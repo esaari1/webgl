@@ -1,17 +1,15 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { cubeColors, cubeIndexes, cubeNormals, cubePoints } from "./geometry/cube";
 import { drawScene, initBuffer, initElementBuffer, initShaderProgram } from './gl';
 
 function Cube() {
-
-    const [zoom, setZoom] = useState(85);
 
     const requestRef = useRef();
     const previousTimeRef = useRef();
     const glRef = useRef();
     const programRef = useRef();
     const rotateRef = useRef(0);
-    const zoomRef = useRef(85);
+    const zoomRef = useRef(15);
     const indexCountRef = useRef(0);
 
     const animate = time => {
@@ -19,7 +17,7 @@ function Cube() {
             time *= 0.001; // convert to seconds
             const delta = time - previousTimeRef.current;
 
-            drawScene(glRef.current, programRef.current, rotateRef.current * 0.3, rotateRef.current * 0.7, rotateRef.current, 100 - zoomRef.current, indexCountRef.current);
+            drawScene(glRef.current, programRef.current, rotateRef.current * 0.3, rotateRef.current * 0.7, rotateRef.current, zoomRef.current, indexCountRef.current);
             rotateRef.current += delta;
         }
 
@@ -39,10 +37,6 @@ function Cube() {
             );
             return;
         }
-
-        //const sphere = icosphere(0);
-        // const positions = sphere.vertices;
-        // const indexes = sphere.triangles;
 
         const program = initShaderProgram(gl, vCubeSource, fCubeSource);
 
@@ -70,20 +64,13 @@ function Cube() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-
-    const updateZoom = (evt) => {
-        setZoom(evt.target.value);
-        zoomRef.current = evt.target.value;
+    const handleZoom = (evt) => {
+        zoomRef.current += evt.deltaY * 0.05;
     }
 
     return (
         <>
-        <canvas id="glcanvas" width="640" height="480"></canvas>
-        <div className="control">
-            <label>Zoom: </label>
-            <input type="range" id="slider" min="1" max="100" value={zoom} onChange={updateZoom} />
-            <div>{zoom}</div>
-        </div>
+        <canvas id="glcanvas" width="800" height="600" onWheel={handleZoom}></canvas>
         </>
     )
 }

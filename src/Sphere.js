@@ -82,7 +82,7 @@ function Sphere() {
 
     return (
         <>
-            <canvas id="glcanvas" width="640" height="480"
+            <canvas id="glcanvas" width="800" height="600"
                 onWheel={handleZoom}
                 onMouseDown={handleStartRotate}
                 onMouseUp={handleStopRotate}
