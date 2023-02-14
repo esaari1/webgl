@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { drawScene, initBuffer, initElementBuffer, initShaderProgram } from "./gl";
-import { icosphere } from "./geometry/icosphere";
+import { drawArrayScene, initBuffer, initShaderProgram } from "./gl";
+import { uvsphere } from "./geometry/uvsphere";
 
 function Sphere() {
 
@@ -45,21 +45,22 @@ function Sphere() {
                 return;
             }
 
-            const sphere = icosphere(3, true);
+            //const sphere = icosphere(3, true);
+            const sphere2 = uvsphere(64, 32);
 
             const program = initShaderProgram(gl, vSource, fSource);
 
             // Now create an array of positions for the square.
-            initBuffer(gl, program, sphere.vertices, "aVertexPosition", 3);
+            initBuffer(gl, program, sphere2.vertices, "aVertexPosition", 3);
 
             // UVs
-            initBuffer(gl, program, sphere.uv, "aTexCoord", 2);
+            initBuffer(gl, program, sphere2.uv, "aTexCoord", 2);
 
             // Index buffer
-            initElementBuffer(gl, sphere.triangles);
+            //initElementBuffer(gl, sphere.triangles);
 
             // Normal buffer
-            initBuffer(gl, program, sphere.vertices, "aVertexNormal", 3);
+            initBuffer(gl, program, sphere2.vertices, "aVertexNormal", 3);
 
             // Create a texture.
             var texture = gl.createTexture();
@@ -78,11 +79,12 @@ function Sphere() {
 
             glRef.current = gl;
             programRef.current = program;
-            indexCount.current = sphere.triangles.length;
+            //indexCount.current = sphere.triangles.length;
+            indexCount.current = sphere2.vertices.length / 3;
         }
 
-        drawScene(glRef.current, programRef.current, rotateX, rotateY, 0, zoom, indexCount.current);
-        //drawArrayScene(glRef.current, programRef.current, rotateX, rotateY, 0, zoom, indexCount.current);
+        //drawScene(glRef.current, programRef.current, rotateX, rotateY, 0, zoom, indexCount.current);
+        drawArrayScene(glRef.current, programRef.current, rotateX, rotateY, 0, zoom, indexCount.current);
     }, [zoom, rotateX, rotateY])
 
     const handleZoom = (evt) => {
